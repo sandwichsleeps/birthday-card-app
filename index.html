@@ -3,243 +3,976 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Birthday Card Giggle Machine 🎉</title>
+  <title>Birthday Card Giggle Generator 🎉</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#ff4d8d">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
   <style>
     :root{
-      --accent:#ff4d8d;
-      --bg:#fff0f6;
+      --bg1:#ffecf7;
+      --bg2:#e8f7ff;
       --ink:#1f2937;
-      --border:rgba(0,0,0,.08);
-      --radius:16px;
+      --muted:#6b7280;
+      --card:#ffffff;
+      --shadow: 0 12px 30px rgba(0,0,0,.12);
+      --accent:#ff4d8d;
+      --accent2:#2dd4bf;
+      --accent3:#fbbf24;
+      --border: rgba(0,0,0,.08);
+      --radius: 18px;
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg,#ffecf7,#e8f7ff);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif;
       color:var(--ink);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(255,77,141,.22), transparent 55%),
+        radial-gradient(1100px 700px at 85% 15%, rgba(45,212,191,.22), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(251,191,36,.18), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
     }
+
     header{
-      padding:24px 16px;
+      padding: 26px 18px 10px;
       text-align:center;
+      position: relative;
     }
-    h1{ margin:0 0 6px; }
-    .subtitle{ color:#6b7280; font-size:14px; }
+    .fun-title{
+      display:inline-block;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      backdrop-filter: blur(8px);
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+    h1{
+      margin: 14px 0 6px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.05;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .confetti i{
+      position:absolute;
+      width:10px;height:18px;
+      opacity:.9;
+      border-radius: 3px;
+      animation: fall 4.8s linear infinite;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,.12));
+    }
+    @keyframes fall{
+      0%{ transform: translateY(-20px) rotate(0deg); }
+      100%{ transform: translateY(120vh) rotate(720deg); }
+    }
 
     .wrap{
-      max-width:1100px;
-      margin:0 auto;
-      padding:16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
       display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 18px;
+      align-items:start;
     }
+
     .panel{
-      background:white;
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:16px;
-      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      background: rgba(255,255,255,.75);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 26px rgba(0,0,0,.06);
+      backdrop-filter: blur(10px);
     }
+
+    .left{ padding: 18px; }
+    .section-title{
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 800;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255,77,141,.12);
+      border: 1px solid rgba(255,77,141,.25);
+      color: #b4235b;
+      font-weight: 700;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(45,212,191,.10);
+      border: 1px solid rgba(45,212,191,.22);
+      color: #0f766e;
+      font-weight: 800;
+    }
+
     label{
       display:block;
-      font-size:12px;
-      font-weight:700;
-      margin-top:10px;
+      margin: 12px 0 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
     }
     input{
       width:100%;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      font-size:14px;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: rgba(255,255,255,.95);
+      font-size: 14px;
+    }
+    input:focus{
+      border-color: rgba(255,77,141,.5);
+      box-shadow: 0 0 0 4px rgba(255,77,141,.12);
     }
     .row{
       display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
+
     .actions{
       display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:14px;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
     }
     button{
-      border-radius:14px;
-      padding:10px 14px;
-      border:1px solid var(--border);
-      font-weight:800;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 800;
       cursor:pointer;
-      background:white;
+      transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+      font-size: 14px;
+      user-select: none;
     }
-    .primary{
-      background:linear-gradient(135deg,var(--accent),#ff7ab0);
-      color:white;
-      border:none;
+    .btn-primary{
+      background: linear-gradient(135deg, var(--accent), #ff7ab0);
+      color: white;
+      box-shadow: 0 12px 22px rgba(255,77,141,.25);
+    }
+    .btn-primary:hover{ filter: brightness(1.02); }
+    .btn-primary:active{ transform: translateY(1px); }
+    .btn-secondary{
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--border);
+      color: #111827;
+    }
+    .btn-secondary:hover{ box-shadow: 0 10px 18px rgba(0,0,0,.08); }
+
+    .tips{
+      margin-top: 14px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(45,212,191,.10);
+      border: 1px solid rgba(45,212,191,.22);
+      color: #0f766e;
+      font-size: 13px;
+      line-height: 1.35;
     }
 
-    .stack{ display:flex; flex-direction:column; gap:12px; }
-    .card{
-      border:1px solid var(--border);
-      border-radius:16px;
+    /* Right side */
+    .right{
+      padding: 18px;
+      position: sticky;
+      top: 14px;
+    }
+    .right-top{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      max-height: calc(100vh - 220px);
+      overflow:auto;
+      padding-right: 6px;
+    }
+
+    .bday-card{
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       overflow:hidden;
-      display:grid;
-      grid-template-columns:1fr 1fr;
+      position: relative;
     }
-    .left{ padding:14px; background:#fff6fa; }
-    .right{ padding:14px; }
-    .message{ white-space:pre-wrap; font-size:14px; line-height:1.45; }
-    .signature{ font-weight:800; margin-top:6px; white-space:nowrap; }
+    .card-ribbon{
+      position:absolute;
+      top: 14px;
+      right: -46px;
+      transform: rotate(35deg);
+      background: linear-gradient(135deg, var(--accent2), #60a5fa);
+      color:#053c3a;
+      font-weight: 900;
+      padding: 8px 52px;
+      font-size: 12px;
+      border: 1px solid rgba(0,0,0,.08);
+    }
 
-    @media(max-width:900px){
-      .wrap{ grid-template-columns:1fr; }
-      .card{ grid-template-columns:1fr; }
+    .card-inner{
+      display:grid;
+      grid-template-columns: 1fr 1fr; /* inside-card look */
+      min-height: 240px;
+    }
+    .card-left{
+      padding: 18px;
+      background:
+        radial-gradient(700px 220px at 50% 0%, rgba(255,77,141,.14), transparent 60%),
+        radial-gradient(500px 200px at 0% 100%, rgba(251,191,36,.12), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.95));
+      border-right: 1px dashed rgba(0,0,0,.12);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap: 10px;
+    }
+    .card-left h2{
+      margin:0;
+      font-size: 18px;
+      line-height:1.1;
+    }
+    .meta{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing:.2px;
+      line-height: 1.35;
+    }
+    .big-emoji{
+      font-size: 46px;
+      line-height: 1;
+      margin-top: 6px;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.10));
+    }
+
+    .card-right{
+      padding: 18px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap: 12px;
+      background: rgba(255,255,255,.98);
+    }
+    .message{
+      font-size: 14px;
+      line-height: 1.45;
+      margin:0;
+      white-space: pre-wrap;
+    }
+    .signoff{
+      margin:0;
+      font-weight: 800;
+      color: #111827;
+    }
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .card-actions{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .btn-mini{
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.92);
+      color:#111827;
+    }
+    .btn-mini:hover{ box-shadow: 0 10px 18px rgba(0,0,0,.08); }
+
+    .empty{
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed rgba(0,0,0,.18);
+      background: rgba(255,255,255,.6);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Toast */
+    .toast-wrap{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      z-index: 50;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:none;
+      background: rgba(17,24,39,.92);
+      color: white;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 220px;
+      max-width: 320px;
+      box-shadow: 0 16px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      line-height: 1.3;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop{
+      from{ transform: translateY(6px); opacity:.0; }
+      to{ transform: translateY(0); opacity:1; }
+    }
+
+    @media (max-width: 920px){
+      .wrap{ grid-template-columns: 1fr; }
+      .right{ position: static; }
+      .stack{ max-height: none; }
+    }
+
+    /* PRINT: only print the selected card */
+    @media print {
+      body{ background: white !important; }
+      header, .left, .right-top, .empty, .toast-wrap { display: none !important; }
+      .panel.right{ border: 0; box-shadow:none; background: transparent; }
+      .stack{ max-height: none !important; overflow: visible !important; padding-right: 0; }
+
+      .bday-card{ display: none !important; box-shadow:none !important; }
+      .bday-card.print-target{
+        display: block !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+      }
+      .card-actions{ display:none !important; }
+      .card-ribbon{ display:none !important; }
     }
   </style>
 </head>
 
 <body>
-<header>
-  <h1>Birthday Card Giggle Machine 🎉</h1>
-  <p class="subtitle">Write a funny birthday message in seconds</p>
-</header>
+  <header>
+    <div class="confetti" aria-hidden="true" id="confetti"></div>
+    <div class="fun-title">🎈 The Birthday Card Giggle Machine 🎈</div>
+    <h1>Write a funny birthday message in 10 seconds</h1>
+    <p class="subtitle">Type a name, age, hobby, adjective and plural noun — saved cards stack underneath.</p>
+  </header>
 
-<main class="wrap">
-  <!-- Input -->
-  <section class="panel">
-    <label>To (recipient)</label>
-    <input id="name" placeholder="e.g. Ivy">
-
-    <div class="row">
-      <div>
-        <label>Age</label>
-        <input id="age" placeholder="e.g. 9">
+  <main class="wrap">
+    <!-- Left: input -->
+    <section class="panel left">
+      <div class="section-title">
+        Card Builder <span class="badge">Name • Age • Hobby • Adjective • Plural Noun</span>
+        <span class="pill" id="saveHint">Auto-saves ✅</span>
       </div>
-      <div>
-        <label>Hobby</label>
-        <input id="hobby" placeholder="e.g. drawing">
+
+      <label for="name">Person’s name <span style="color:#b4235b;">*</span></label>
+      <input id="name" placeholder="e.g., Phoebe Buffay" autocomplete="off" />
+
+      <div class="row">
+        <div>
+          <label for="age">Age</label>
+          <input id="age" placeholder="e.g., 26" inputmode="numeric" autocomplete="off" />
+        </div>
+        <div>
+          <label for="hobby">Hobby</label>
+          <input id="hobby" placeholder="e.g., playing guitar" autocomplete="off" />
+        </div>
       </div>
-    </div>
 
-    <div class="row">
-      <div>
-        <label>Adjective</label>
-        <input id="adjective" placeholder="e.g. sparkly">
+      <div class="row">
+        <div>
+          <label for="adjective">Adjective</label>
+          <input id="adjective" placeholder="e.g., quirky, awesome, legendary" autocomplete="off" />
+        </div>
+        <div>
+          <label for="plural">Plural Noun</label>
+          <input id="plural" placeholder="e.g., cats, cupcakes, confetti" autocomplete="off" />
+        </div>
       </div>
-      <div>
-        <label>Plural noun</label>
-        <input id="plural" placeholder="e.g. confetti">
+
+      <div class="actions">
+        <button class="btn-primary" id="generate">Generate Card 🎉</button>
+        <button class="btn-secondary" id="random">Surprise me 🎲</button>
+        <button class="btn-secondary" id="clear">Clear stack 🧹</button>
       </div>
-    </div>
 
-    <label>From (your name)</label>
-    <input id="sender" placeholder="e.g. Mum, Alex">
-
-    <div class="actions">
-      <button class="primary" id="generate">Generate 🎉</button>
-      <button id="installBtn" style="display:none;">Install App 📲</button>
-    </div>
-  </section>
-
-  <!-- Cards -->
-  <section class="panel">
-    <div class="stack" id="stack"></div>
-  </section>
-</main>
-
-<script>
-  /* PWA registration */
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js");
-  }
-
-  const $ = id => document.getElementById(id);
-  const stack = $("stack");
-
-  /* Generate card */
-  function generate(){
-    const name = $("name").value || "Friend";
-    const age = $("age").value || "";
-    const hobby = $("hobby").value || "having fun";
-    const adj = $("adjective").value || "amazing";
-    const plural = $("plural").value || "good times";
-    const sender = $("sender").value || "You";
-
-    const msg =
-`Hey ${name}!
-
-Happy ${age ? age + "th " : ""}birthday 🎉
-You are so ${adj}, and your ${hobby} skills are awesome.
-May your day be filled with ${plural}!
-
-Cheers,
-`;
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="left"><strong>TO:</strong> ${name}</div>
-      <div class="right">
-        <div class="message">${msg}</div>
-        <div class="signature">— ${sender}</div>
+      <div class="tips">
+        <strong>Tip:</strong> You write the adjective + plural noun — the message tone auto-adjusts by age.
+        <br/>Press <strong>Enter</strong> to generate.
       </div>
-    `;
-    stack.prepend(card);
-  }
-  $("generate").addEventListener("click", generate);
+    </section>
 
-  /* Install App button logic */
-  let deferredPrompt = null;
-  const installBtn = $("installBtn");
+    <!-- Right: card stack -->
+    <section class="panel right">
+      <div class="right-top">
+        <div class="section-title" style="margin:0;">Your Cards (newest first)</div>
+        <p class="small" id="count">0 cards</p>
+      </div>
 
-  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInstalled = () =>
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true;
+      <div class="stack" id="stack">
+        <div class="empty" id="empty">
+          Your cards will appear here — they’ll also be saved automatically on this device ✨
+        </div>
+      </div>
+    </section>
+  </main>
 
-  function updateInstallButton(){
-    if (isInstalled()) {
-      installBtn.style.display = "none";
-    } else if (deferredPrompt || isIOS()) {
-      installBtn.style.display = "inline-block";
+  <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    // ===== PWA: register Service Worker =====
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
     }
-  }
 
-  window.addEventListener("beforeinstallprompt", e => {
-    e.preventDefault();
-    deferredPrompt = e;
-    updateInstallButton();
-  });
+    // ===== Confetti =====
+    (function makeConfetti(){
+      const c = document.getElementById("confetti");
+      const colors = ["#ff4d8d","#2dd4bf","#fbbf24","#60a5fa","#a78bfa","#fb7185"];
+      const count = 28;
+      for (let i=0;i<count;i++){
+        const piece = document.createElement("i");
+        piece.style.left = Math.random()*100 + "%";
+        piece.style.top = (-10 - Math.random()*40) + "px";
+        piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+        piece.style.animationDelay = (Math.random()*3) + "s";
+        piece.style.animationDuration = (3.5 + Math.random()*3) + "s";
+        piece.style.width = (8 + Math.random()*10) + "px";
+        piece.style.height = (10 + Math.random()*16) + "px";
+        c.appendChild(piece);
+      }
+    })();
 
-  window.addEventListener("appinstalled", () => {
-    deferredPrompt = null;
-    updateInstallButton();
-  });
+    const $ = (id) => document.getElementById(id);
 
-  installBtn.addEventListener("click", async () => {
-    if (isIOS()) {
-      alert("On iPhone/iPad: tap Share → Add to Home Screen.");
-      return;
+    // Inputs
+    const nameEl = $("name");
+    const ageEl = $("age");
+    const hobbyEl = $("hobby");
+    const adjectiveEl = $("adjective");
+    const pluralEl = $("plural");
+
+    // UI
+    const stackEl = $("stack");
+    const emptyEl = $("empty");
+    const countEl = $("count");
+    const toastWrap = $("toasts");
+
+    // Storage
+    const STORAGE_KEY = "bday_cards_v2";
+    let cards = []; // newest first
+    let editId = null; // when editing a card
+
+    // Content pools
+    const emojis = ["🎂","🎉","🎈","🍰","🥳","🎁","🪩","✨","😄","🤹‍♂️","🕺","🧁","🐱","🎸"];
+    const closersByTone = {
+      kid:   ["Your super-fun friend,", "With sparkles and high-fives,", "With birthday magic,", "Party buddy forever,"],
+      teen:  ["Your chaos-supporter,", "With maximum vibes,", "From your certified legend-friend,", "Stay iconic,"],
+      adult: ["With maximum good vibes,", "Cheers,", "With birthday confetti,", "Your party-approved friend,"],
+      senior:["With warm wishes,", "With lots of love and laughs,", "Wishing you a wonderful year,", "With heartfelt cheers,"]
+    };
+
+    // ===== Helpers =====
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function cleanText(s){ return (s || "").trim(); }
+
+    function toast(msg){
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.textContent = msg;
+      toastWrap.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        t.style.transform = "translateY(6px)";
+        t.style.transition = "opacity .22s ease, transform .22s ease";
+      }, 2200);
+      setTimeout(() => t.remove(), 2600);
     }
-    if (!deferredPrompt) {
-      alert("Install not available yet. Try refreshing in Chrome.");
-      return;
-    }
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    updateInstallButton();
-  });
 
-  updateInstallButton();
-</script>
+    function safeNumberString(s){
+      const raw = cleanText(s);
+      if (!raw) return "";
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return "";
+      return String(Math.floor(n));
+    }
+
+    function getToneFromAge(ageRaw){
+      const n = Number(ageRaw);
+      if (!Number.isFinite(n) || n <= 0) return "adult";
+      const age = Math.floor(n);
+      if (age <= 12) return "kid";
+      if (age <= 17) return "teen";
+      if (age <= 59) return "adult";
+      return "senior";
+    }
+
+    function ordinal(n){
+      const num = Number(n);
+      if (!Number.isFinite(num)) return String(n || "");
+      const v = Math.floor(num);
+      const mod10 = v % 10;
+      const mod100 = v % 100;
+      if (mod10 === 1 && mod100 !== 11) return v + "st";
+      if (mod10 === 2 && mod100 !== 12) return v + "nd";
+      if (mod10 === 3 && mod100 !== 13) return v + "rd";
+      return v + "th";
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function escapeHtmlWithBreaks(str){
+      return escapeHtml(str).replaceAll("\n","<br/>");
+    }
+
+    // ===== Message builder =====
+    function buildMessage({ name, age, hobby, adjective, plural }) {
+      const safeName = name || "Friend";
+      const ageNum = Number(age);
+      const hasAge = Number.isFinite(ageNum) && ageNum > 0;
+      const ageText = hasAge ? String(Math.floor(ageNum)) : "mystery";
+      const ageOrdinal = hasAge ? ordinal(ageNum) : "mystery-age";
+      const safeHobby = hobby || "having fun";
+      const safeAdj = adjective || "amazing";
+      const safePlural = plural || "good times";
+
+      const tone = getToneFromAge(age);
+
+      const templates = {
+        kid: [
+          () => `Dear ${safeName},\n\nHAPPY BIRTHDAY! 🎉 Turning ${ageText} is AWESOME!\nYou are so ${safeAdj} — seriously, you’re like a birthday superhero.\nI hope you get to do lots of ${safeHobby} today and enjoy ${safePlural} all day long.\n\nHave the BEST day ever!`,
+          () => `Hey ${safeName}!\n\nHappy ${ageOrdinal} birthday! 🥳\nToday you should do three things: 1) Smile, 2) Laugh, 3) Eat cake.\nBecause you’re ${safeAdj}, and your ${safeHobby} skills deserve a trophy (or at least extra cake).\nMay your day be filled with ${safePlural}!`
+        ],
+        teen: [
+          () => `Hey ${safeName},\n\nHappy ${ageOrdinal}! 🎈\nYou’re officially ${safeAdj}, and your ${safeHobby} era is looking unstoppable.\nMay your day be packed with ${safePlural}, zero awkward moments, and cake that disappears mysteriously.\n\nStay legendary.`,
+          () => `To ${safeName},\n\nCongrats on turning ${ageText} — a.k.a. “same you, upgraded version.”\nHope your birthday is ${safeAdj}, your ${safeHobby} time is maxed out, and ${safePlural} show up like a surprise bonus level.\n\nHave an epic one!`
+        ],
+        adult: [
+          () => `Dear ${safeName},\n\nHappy ${ageOrdinal}! 🎉\nAnother year older, another year wiser… or at least another year better at pretending.\nAt ${ageText}, you’re officially ${safeAdj}, and your talent for ${safeHobby} is genuinely impressive.\nMay your day be filled with ${safePlural}, laughter, and cake eaten like it’s a sport.\n\nStay awesome!`,
+          () => `Hi ${safeName},\n\nHappy birthday! Turning ${ageText} is basically unlocking a new level.\nNew perks include: being ${safeAdj}, doing more ${safeHobby}, and receiving ${safePlural} like it’s your job.\n\nHope it’s a great one!`
+        ],
+        senior: [
+          () => `Dear ${safeName},\n\nHappy ${ageOrdinal} birthday. 🎂\nYou are truly ${safeAdj}, and it’s a joy to celebrate you.\nWishing you a day full of ${safePlural}, warm moments, and time to enjoy ${safeHobby} in the best way.\n\nHave a wonderful birthday.`,
+          () => `To ${safeName},\n\nWarmest happy birthday wishes on your ${ageOrdinal}.\nMay the year ahead bring ${safePlural}, great health, and plenty of time for ${safeHobby}.\nAnd today? Cake is the correct answer.\n\nEnjoy your special day.`
+        ]
+      };
+
+      const punchlines = {
+        kid: [
+          `PS: Today’s rule: cake is a vegetable. (Birthday science.)`,
+          `PS: If anyone says “bedtime”, you can politely say “it’s my birthday.”`,
+          `PS: Warning: too much fun may cause spontaneous dancing.`
+        ],
+        teen: [
+          `PS: Today’s vibe: ${safeAdj}. Tomorrow’s vibe: leftovers.`,
+          `PS: Calories don’t count if there’s birthday music playing.`,
+          `PS: You have permission to ignore “act your age” for 24 hours.`
+        ],
+        adult: [
+          `PS: Today’s rule: calories don’t count if you smile first.`,
+          `PS: If anyone asks, you’re not ${ageText}… you’re “${ageText} years young and still loading.”`,
+          `PS: Your birthday cake called… it said “I’m the main character.”`
+        ],
+        senior: [
+          `PS: Today’s best plan: celebrate slowly… and enjoy every bite of cake.`,
+          `PS: Laughter is still the best gift — cake is a close second.`,
+          `PS: Wishing you a year full of pleasant surprises (and easy-to-cut cake).`
+        ]
+      };
+
+      const base = pick(templates[tone])();
+      return base + "\n\n" + pick(punchlines[tone]);
+    }
+
+    // ===== Persistence =====
+    function loadCards(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCards(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
+
+    // ===== Share links =====
+    function buildShareLink(payload){
+      const url = new URL(window.location.href);
+      url.searchParams.set("n", payload.name || "");
+      url.searchParams.set("a", payload.age || "");
+      url.searchParams.set("h", payload.hobby || "");
+      url.searchParams.set("adj", payload.adjective || "");
+      url.searchParams.set("p", payload.plural || "");
+      return url.toString();
+    }
+
+    function readPayloadFromURL(){
+      const sp = new URLSearchParams(window.location.search);
+      const any =
+        sp.has("n") || sp.has("a") || sp.has("h") || sp.has("adj") || sp.has("p");
+      if (!any) return null;
+
+      return {
+        name: cleanText(sp.get("n") || ""),
+        age: cleanText(sp.get("a") || ""),
+        hobby: cleanText(sp.get("h") || ""),
+        adjective: cleanText(sp.get("adj") || ""),
+        plural: cleanText(sp.get("p") || "")
+      };
+    }
+
+    function clearURLParams(){
+      const url = new URL(window.location.href);
+      url.search = "";
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    // ===== Card rendering =====
+    function makeCardEl(cardObj){
+      const tone = getToneFromAge(cardObj.age);
+      const emoji = cardObj.emoji || pick(emojis);
+      const message = cardObj.message || buildMessage(cardObj);
+      const closer = cardObj.closer || pick(closersByTone[tone]);
+
+      const safeName = cardObj.name || "Friend";
+      const safeAge = cardObj.age || "—";
+      const safeHobby = cardObj.hobby || "—";
+      const safeAdj = cardObj.adjective || "—";
+      const safePlural = cardObj.plural || "—";
+
+      const card = document.createElement("article");
+      card.className = "bday-card";
+      card.dataset.cardId = cardObj.id;
+
+      card.innerHTML = `
+        <div class="card-ribbon">${cardObj.isNew ? "NEW" : "CARD"}</div>
+        <div class="card-inner">
+          <div class="card-left">
+            <div class="meta">TO:</div>
+            <h2>${escapeHtml(safeName)}</h2>
+            <div class="meta">
+              AGE: ${escapeHtml(String(safeAge))} • TONE: ${escapeHtml(tone.toUpperCase())}<br/>
+              HOBBY: ${escapeHtml(String(safeHobby))}<br/>
+              ADJ: ${escapeHtml(String(safeAdj))} • PLURAL: ${escapeHtml(String(safePlural))}
+            </div>
+            <div class="big-emoji">${emoji}</div>
+          </div>
+          <div class="card-right">
+            <p class="message">${escapeHtmlWithBreaks(message)}</p>
+            <p class="signoff">${escapeHtml(closer)}<br/>— You</p>
+            <div class="card-actions">
+              <button class="btn-mini" data-action="print">Print 🖨️</button>
+              <button class="btn-mini" data-action="copyText">Copy Text 📋</button>
+              <button class="btn-mini" data-action="copyLink">Copy Link 🔗</button>
+              <button class="btn-mini" data-action="edit">Edit ✏️</button>
+              <button class="btn-mini" data-action="delete">Delete 🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (cardObj.isNew){
+        setTimeout(() => {
+          const rib = card.querySelector(".card-ribbon");
+          if (rib) rib.textContent = "CARD";
+        }, 1200);
+      }
+
+      return card;
+    }
+
+    function render(){
+      stackEl.querySelectorAll(".bday-card").forEach(n => n.remove());
+      cards.forEach(c => {
+        const el = makeCardEl(c);
+        stackEl.insertBefore(el, emptyEl);
+      });
+      updateCount();
+    }
+
+    function updateCount(){
+      const n = cards.length;
+      countEl.textContent = `${n} card${n === 1 ? "" : "s"}`;
+      emptyEl.style.display = n ? "none" : "block";
+    }
+
+    // ===== Print logic =====
+    function clearPrintTargets(){
+      stackEl.querySelectorAll(".bday-card").forEach(c => c.classList.remove("print-target"));
+    }
+    function printCard(cardEl){
+      clearPrintTargets();
+      cardEl.classList.add("print-target");
+      setTimeout(() => window.print(), 50);
+      setTimeout(() => cardEl.classList.remove("print-target"), 800);
+    }
+
+    // ===== Clipboard =====
+    async function copyToClipboard(text){
+      try{
+        if (navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // ===== Core actions =====
+    function validateInputs(){
+      const name = cleanText(nameEl.value);
+      if (!name){
+        toast("Please enter a name 🙂");
+        nameEl.focus();
+        return null;
+      }
+
+      const ageClean = cleanText(ageEl.value);
+      if (ageClean){
+        const n = Number(ageClean);
+        if (!Number.isFinite(n) || n <= 0){
+          toast("Age must be a positive number (or leave it blank).");
+          ageEl.focus();
+          return null;
+        }
+      }
+
+      return {
+        name,
+        age: safeNumberString(ageEl.value),
+        hobby: cleanText(hobbyEl.value),
+        adjective: cleanText(adjectiveEl.value),
+        plural: cleanText(pluralEl.value)
+      };
+    }
+
+    function generateCard(payload){
+      const tone = getToneFromAge(payload.age);
+      const cardObj = {
+        id: "c_" + Math.random().toString(36).slice(2, 10),
+        createdAt: Date.now(),
+        ...payload,
+        tone,
+        emoji: pick(emojis),
+        message: buildMessage(payload),
+        closer: pick(closersByTone[tone]),
+        isNew: true
+      };
+
+      if (editId){
+        cards = cards.filter(c => c.id !== editId);
+        editId = null;
+      }
+
+      cards.unshift(cardObj);
+      saveCards();
+      render();
+      toast("Card saved ✅");
+    }
+
+    function randomFill(){
+      const names = ["Mia","Leo","Sam","Ava","Noah","Zoe","Kai","Luna","Max","Ivy","Phoebe"];
+      const hobbies = ["gaming","soccer","baking","drawing","basketball","reading","dancing","coding","singing","skateboarding","playing guitar"];
+      const adjectives = ["quirky","legendary","brilliant","chaotic","sparkly","unstoppable","iconic","kind","funny","amazing"];
+      const plurals = ["cats","cupcakes","high-fives","confetti","giggles","balloons","good vibes","snacks","party hats","surprises"];
+      const ages = [7,9,10,12,15,17,21,30,42,65];
+
+      nameEl.value = pick(names);
+      ageEl.value = pick(ages);
+      hobbyEl.value = pick(hobbies);
+      adjectiveEl.value = pick(adjectives);
+      pluralEl.value = pick(plurals);
+      nameEl.focus();
+      toast("Surprise fields filled 🎲");
+    }
+
+    function clearStack(){
+      if (!cards.length){
+        toast("Nothing to clear ✨");
+        return;
+      }
+      const ok = confirm("Clear all saved cards on this device?");
+      if (!ok) return;
+      cards = [];
+      saveCards();
+      render();
+      toast("Cleared ✅");
+    }
+
+    function fillFormFromCard(card){
+      nameEl.value = card.name || "";
+      ageEl.value = card.age || "";
+      hobbyEl.value = card.hobby || "";
+      adjectiveEl.value = card.adjective || "";
+      pluralEl.value = card.plural || "";
+      editId = card.id;
+      toast("Editing mode: update fields then Generate 🎉");
+      nameEl.focus();
+      nameEl.select?.();
+    }
+
+    function cardTextForCopy(card){
+      const tone = getToneFromAge(card.age);
+      const titleLine = `To: ${card.name || "Friend"} (tone: ${tone})`;
+      const metaLine = `Age: ${card.age || "—"} | Hobby: ${card.hobby || "—"} | Adjective: ${card.adjective || "—"} | Plural: ${card.plural || "—"}`;
+      return `${titleLine}\n${metaLine}\n\n${card.message || buildMessage(card)}\n\n${card.closer || pick(closersByTone[tone])}\n— You`;
+    }
+
+    // ===== Event bindings =====
+    $("generate").addEventListener("click", () => {
+      const payload = validateInputs();
+      if (!payload) return;
+      generateCard(payload);
+    });
+
+    $("random").addEventListener("click", randomFill);
+    $("clear").addEventListener("click", clearStack);
+
+    stackEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      const cardEl = e.target.closest(".bday-card");
+      if (!cardEl) return;
+
+      const id = cardEl.dataset.cardId;
+      const card = cards.find(c => c.id === id);
+      if (!card) return;
+
+      const action = btn.dataset.action;
+
+      if (action === "print") {
+        printCard(cardEl);
+        return;
+      }
+
+      if (action === "delete") {
+        const ok = confirm("Delete this card?");
+        if (!ok) return;
+        cards = cards.filter(c => c.id !== id);
+        saveCards();
+        render();
+        toast("Deleted 🗑️");
+        return;
+      }
+
+      if (action === "edit") {
+        fillFormFromCard(card);
+        return;
+      }
+
+      if (action === "copyText") {
+        const ok = await copyToClipboard(cardTextForCopy(card));
+        toast(ok ? "Copied text ✅" : "Copy failed ❌");
+        return;
+      }
+
+      if (action === "copyLink") {
+        const link = buildShareLink({
+          name: card.name || "",
+          age: card.age || "",
+          hobby: card.hobby || "",
+          adjective: card.adjective || "",
+          plural: card.plural || ""
+        });
+        const ok = await copyToClipboard(link);
+        toast(ok ? "Copied share link ✅" : "Copy failed ❌");
+        return;
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
+        const payload = validateInputs();
+        if (!payload) return;
+        generateCard(payload);
+      }
+    });
+
+    // ===== Boot =====
+    function boot(){
+      cards = loadCards();
+
+      const shared = readPayloadFromURL();
+      if (shared && (shared.name || shared.hobby || shared.adjective || shared.plural || shared.age)) {
+        if (shared.name) {
+          generateCard(shared);
+          toast("Card created from shared link 🎉");
+        } else {
+          toast("Shared link missing name.");
+        }
+        clearURLParams();
+      } else {
+        render();
+      }
+    }
+
+    boot();
+  </script>
 </body>
 </html>
