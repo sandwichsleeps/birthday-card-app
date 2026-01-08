@@ -1,6 +1,6 @@
 /* PWA Service Worker (GitHub Pages friendly) */
 
-const CACHE_VERSION = "bday-pwa-v3";
+const CACHE_VERSION = "bday-pwa-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
