@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Birthday Card Giggle Generator 🎉</title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#ff4d8d">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <style>
     :root{
       --bg1:#ffecf7;
@@ -105,6 +112,7 @@
       display:flex;
       align-items:center;
       gap:10px;
+      flex-wrap: wrap;
     }
     .badge{
       font-size: 12px;
@@ -114,6 +122,15 @@
       border: 1px solid rgba(255,77,141,.25);
       color: #b4235b;
       font-weight: 700;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(45,212,191,.10);
+      border: 1px solid rgba(45,212,191,.22);
+      color: #0f766e;
+      font-weight: 800;
     }
 
     label{
@@ -313,6 +330,37 @@
       font-size: 13px;
     }
 
+    /* Toast */
+    .toast-wrap{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      z-index: 50;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:none;
+      background: rgba(17,24,39,.92);
+      color: white;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 220px;
+      max-width: 320px;
+      box-shadow: 0 16px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      line-height: 1.3;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop{
+      from{ transform: translateY(6px); opacity:.0; }
+      to{ transform: translateY(0); opacity:1; }
+    }
+
     @media (max-width: 920px){
       .wrap{ grid-template-columns: 1fr; }
       .right{ position: static; }
@@ -322,7 +370,7 @@
     /* PRINT: only print the selected card */
     @media print {
       body{ background: white !important; }
-      header, .left, .right-top, .empty { display: none !important; }
+      header, .left, .right-top, .empty, .toast-wrap { display: none !important; }
       .panel.right{ border: 0; box-shadow:none; background: transparent; }
       .stack{ max-height: none !important; overflow: visible !important; padding-right: 0; }
 
@@ -343,7 +391,7 @@
     <div class="confetti" aria-hidden="true" id="confetti"></div>
     <div class="fun-title">🎈 The Birthday Card Giggle Machine 🎈</div>
     <h1>Write a funny birthday message in 10 seconds</h1>
-    <p class="subtitle">Type a name, age, hobby, adjective and plural noun — new cards stack underneath.</p>
+    <p class="subtitle">Type a name, age, hobby, adjective and plural noun — saved cards stack underneath.</p>
   </header>
 
   <main class="wrap">
@@ -351,9 +399,10 @@
     <section class="panel left">
       <div class="section-title">
         Card Builder <span class="badge">Name • Age • Hobby • Adjective • Plural Noun</span>
+        <span class="pill" id="saveHint">Auto-saves ✅</span>
       </div>
 
-      <label for="name">Person’s name</label>
+      <label for="name">Person’s name <span style="color:#b4235b;">*</span></label>
       <input id="name" placeholder="e.g., Phoebe Buffay" autocomplete="off" />
 
       <div class="row">
@@ -367,7 +416,6 @@
         </div>
       </div>
 
-      <!-- NEW: adjective + plural noun -->
       <div class="row">
         <div>
           <label for="adjective">Adjective</label>
@@ -400,14 +448,23 @@
 
       <div class="stack" id="stack">
         <div class="empty" id="empty">
-          Your cards will appear here on the right — print any one using the card’s Print button 🎂
+          Your cards will appear here — they’ll also be saved automatically on this device ✨
         </div>
       </div>
     </section>
   </main>
 
+  <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
   <script>
-    // Confetti
+    // ===== PWA: register Service Worker =====
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
+    // ===== Confetti =====
     (function makeConfetti(){
       const c = document.getElementById("confetti");
       const colors = ["#ff4d8d","#2dd4bf","#fbbf24","#60a5fa","#a78bfa","#fb7185"];
@@ -427,16 +484,25 @@
 
     const $ = (id) => document.getElementById(id);
 
+    // Inputs
     const nameEl = $("name");
     const ageEl = $("age");
     const hobbyEl = $("hobby");
     const adjectiveEl = $("adjective");
     const pluralEl = $("plural");
 
+    // UI
     const stackEl = $("stack");
     const emptyEl = $("empty");
     const countEl = $("count");
+    const toastWrap = $("toasts");
 
+    // Storage
+    const STORAGE_KEY = "bday_cards_v2";
+    let cards = []; // newest first
+    let editId = null; // when editing a card
+
+    // Content pools
     const emojis = ["🎂","🎉","🎈","🍰","🥳","🎁","🪩","✨","😄","🤹‍♂️","🕺","🧁","🐱","🎸"];
     const closersByTone = {
       kid:   ["Your super-fun friend,", "With sparkles and high-fives,", "With birthday magic,", "Party buddy forever,"],
@@ -445,8 +511,30 @@
       senior:["With warm wishes,", "With lots of love and laughs,", "Wishing you a wonderful year,", "With heartfelt cheers,"]
     };
 
+    // ===== Helpers =====
     function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
     function cleanText(s){ return (s || "").trim(); }
+
+    function toast(msg){
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.textContent = msg;
+      toastWrap.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        t.style.transform = "translateY(6px)";
+        t.style.transition = "opacity .22s ease, transform .22s ease";
+      }, 2200);
+      setTimeout(() => t.remove(), 2600);
+    }
+
+    function safeNumberString(s){
+      const raw = cleanText(s);
+      if (!raw) return "";
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return "";
+      return String(Math.floor(n));
+    }
 
     function getToneFromAge(ageRaw){
       const n = Number(ageRaw);
@@ -470,6 +558,19 @@
       return v + "th";
     }
 
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function escapeHtmlWithBreaks(str){
+      return escapeHtml(str).replaceAll("\n","<br/>");
+    }
+
+    // ===== Message builder =====
     function buildMessage({ name, age, hobby, adjective, plural }) {
       const safeName = name || "Friend";
       const ageNum = Number(age);
@@ -528,36 +629,74 @@
       return base + "\n\n" + pick(punchlines[tone]);
     }
 
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeHtmlWithBreaks(str){
-      return escapeHtml(str).replaceAll("\n","<br/>");
+    // ===== Persistence =====
+    function loadCards(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch {
+        return [];
+      }
     }
 
-    function makeCard({ name, age, hobby, adjective, plural }){
-      const tone = getToneFromAge(age);
-      const emoji = pick(emojis);
-      const message = buildMessage({ name, age, hobby, adjective, plural });
-      const closer = pick(closersByTone[tone]);
-      const cardId = "card_" + Math.random().toString(36).slice(2, 10);
+    function saveCards(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
 
-      const safeName = name || "Friend";
-      const safeAge = age || "—";
-      const safeHobby = hobby || "—";
-      const safeAdj = adjective || "—";
-      const safePlural = plural || "—";
+    // ===== Share links =====
+    function buildShareLink(payload){
+      const url = new URL(window.location.href);
+      url.searchParams.set("n", payload.name || "");
+      url.searchParams.set("a", payload.age || "");
+      url.searchParams.set("h", payload.hobby || "");
+      url.searchParams.set("adj", payload.adjective || "");
+      url.searchParams.set("p", payload.plural || "");
+      return url.toString();
+    }
+
+    function readPayloadFromURL(){
+      const sp = new URLSearchParams(window.location.search);
+      const any =
+        sp.has("n") || sp.has("a") || sp.has("h") || sp.has("adj") || sp.has("p");
+      if (!any) return null;
+
+      return {
+        name: cleanText(sp.get("n") || ""),
+        age: cleanText(sp.get("a") || ""),
+        hobby: cleanText(sp.get("h") || ""),
+        adjective: cleanText(sp.get("adj") || ""),
+        plural: cleanText(sp.get("p") || "")
+      };
+    }
+
+    function clearURLParams(){
+      const url = new URL(window.location.href);
+      url.search = "";
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    // ===== Card rendering =====
+    function makeCardEl(cardObj){
+      const tone = getToneFromAge(cardObj.age);
+      const emoji = cardObj.emoji || pick(emojis);
+      const message = cardObj.message || buildMessage(cardObj);
+      const closer = cardObj.closer || pick(closersByTone[tone]);
+
+      const safeName = cardObj.name || "Friend";
+      const safeAge = cardObj.age || "—";
+      const safeHobby = cardObj.hobby || "—";
+      const safeAdj = cardObj.adjective || "—";
+      const safePlural = cardObj.plural || "—";
 
       const card = document.createElement("article");
       card.className = "bday-card";
-      card.dataset.cardId = cardId;
+      card.dataset.cardId = cardObj.id;
+
       card.innerHTML = `
-        <div class="card-ribbon">NEW</div>
+        <div class="card-ribbon">${cardObj.isNew ? "NEW" : "CARD"}</div>
         <div class="card-inner">
           <div class="card-left">
             <div class="meta">TO:</div>
@@ -574,50 +713,126 @@
             <p class="signoff">${escapeHtml(closer)}<br/>— You</p>
             <div class="card-actions">
               <button class="btn-mini" data-action="print">Print 🖨️</button>
+              <button class="btn-mini" data-action="copyText">Copy Text 📋</button>
+              <button class="btn-mini" data-action="copyLink">Copy Link 🔗</button>
+              <button class="btn-mini" data-action="edit">Edit ✏️</button>
+              <button class="btn-mini" data-action="delete">Delete 🗑️</button>
             </div>
           </div>
         </div>
       `;
 
-      setTimeout(() => {
-        const rib = card.querySelector(".card-ribbon");
-        if (rib) rib.textContent = "CARD";
-      }, 1200);
+      if (cardObj.isNew){
+        setTimeout(() => {
+          const rib = card.querySelector(".card-ribbon");
+          if (rib) rib.textContent = "CARD";
+        }, 1200);
+      }
 
       return card;
     }
 
-    function updateCount(){
-      const cards = stackEl.querySelectorAll(".bday-card").length;
-      countEl.textContent = `${cards} card${cards === 1 ? "" : "s"}`;
-      emptyEl.style.display = cards ? "none" : "block";
+    function render(){
+      stackEl.querySelectorAll(".bday-card").forEach(n => n.remove());
+      cards.forEach(c => {
+        const el = makeCardEl(c);
+        stackEl.insertBefore(el, emptyEl);
+      });
+      updateCount();
     }
 
+    function updateCount(){
+      const n = cards.length;
+      countEl.textContent = `${n} card${n === 1 ? "" : "s"}`;
+      emptyEl.style.display = n ? "none" : "block";
+    }
+
+    // ===== Print logic =====
     function clearPrintTargets(){
       stackEl.querySelectorAll(".bday-card").forEach(c => c.classList.remove("print-target"));
     }
-
     function printCard(cardEl){
       clearPrintTargets();
       cardEl.classList.add("print-target");
-      // Wait a tick to ensure CSS applies
       setTimeout(() => window.print(), 50);
-      // Optional: remove after printing (keeps screen clean if user cancels)
       setTimeout(() => cardEl.classList.remove("print-target"), 800);
     }
 
-    function generate(){
+    // ===== Clipboard =====
+    async function copyToClipboard(text){
+      try{
+        if (navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // ===== Core actions =====
+    function validateInputs(){
       const name = cleanText(nameEl.value);
-      const age = cleanText(ageEl.value);
-      const hobby = cleanText(hobbyEl.value);
-      const adjective = cleanText(adjectiveEl.value);
-      const plural = cleanText(pluralEl.value);
+      if (!name){
+        toast("Please enter a name 🙂");
+        nameEl.focus();
+        return null;
+      }
 
-      const card = makeCard({ name, age, hobby, adjective, plural });
+      const ageClean = cleanText(ageEl.value);
+      if (ageClean){
+        const n = Number(ageClean);
+        if (!Number.isFinite(n) || n <= 0){
+          toast("Age must be a positive number (or leave it blank).");
+          ageEl.focus();
+          return null;
+        }
+      }
 
-      // Newest first
-      stackEl.insertBefore(card, stackEl.firstChild);
-      updateCount();
+      return {
+        name,
+        age: safeNumberString(ageEl.value),
+        hobby: cleanText(hobbyEl.value),
+        adjective: cleanText(adjectiveEl.value),
+        plural: cleanText(pluralEl.value)
+      };
+    }
+
+    function generateCard(payload){
+      const tone = getToneFromAge(payload.age);
+      const cardObj = {
+        id: "c_" + Math.random().toString(36).slice(2, 10),
+        createdAt: Date.now(),
+        ...payload,
+        tone,
+        emoji: pick(emojis),
+        message: buildMessage(payload),
+        closer: pick(closersByTone[tone]),
+        isNew: true
+      };
+
+      if (editId){
+        cards = cards.filter(c => c.id !== editId);
+        editId = null;
+      }
+
+      cards.unshift(cardObj);
+      saveCards();
+      render();
+      toast("Card saved ✅");
     }
 
     function randomFill(){
@@ -633,36 +848,131 @@
       adjectiveEl.value = pick(adjectives);
       pluralEl.value = pick(plurals);
       nameEl.focus();
+      toast("Surprise fields filled 🎲");
     }
 
     function clearStack(){
-      stackEl.querySelectorAll(".bday-card").forEach(n => n.remove());
-      updateCount();
+      if (!cards.length){
+        toast("Nothing to clear ✨");
+        return;
+      }
+      const ok = confirm("Clear all saved cards on this device?");
+      if (!ok) return;
+      cards = [];
+      saveCards();
+      render();
+      toast("Cleared ✅");
     }
 
-    $("generate").addEventListener("click", generate);
+    function fillFormFromCard(card){
+      nameEl.value = card.name || "";
+      ageEl.value = card.age || "";
+      hobbyEl.value = card.hobby || "";
+      adjectiveEl.value = card.adjective || "";
+      pluralEl.value = card.plural || "";
+      editId = card.id;
+      toast("Editing mode: update fields then Generate 🎉");
+      nameEl.focus();
+      nameEl.select?.();
+    }
+
+    function cardTextForCopy(card){
+      const tone = getToneFromAge(card.age);
+      const titleLine = `To: ${card.name || "Friend"} (tone: ${tone})`;
+      const metaLine = `Age: ${card.age || "—"} | Hobby: ${card.hobby || "—"} | Adjective: ${card.adjective || "—"} | Plural: ${card.plural || "—"}`;
+      return `${titleLine}\n${metaLine}\n\n${card.message || buildMessage(card)}\n\n${card.closer || pick(closersByTone[tone])}\n— You`;
+    }
+
+    // ===== Event bindings =====
+    $("generate").addEventListener("click", () => {
+      const payload = validateInputs();
+      if (!payload) return;
+      generateCard(payload);
+    });
+
     $("random").addEventListener("click", randomFill);
     $("clear").addEventListener("click", clearStack);
 
-    // Card action delegation (print)
-    stackEl.addEventListener("click", (e) => {
+    stackEl.addEventListener("click", async (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
-      const action = btn.dataset.action;
-      const card = e.target.closest(".bday-card");
+
+      const cardEl = e.target.closest(".bday-card");
+      if (!cardEl) return;
+
+      const id = cardEl.dataset.cardId;
+      const card = cards.find(c => c.id === id);
       if (!card) return;
 
-      if (action === "print") printCard(card);
-    });
+      const action = btn.dataset.action;
 
-    // Enter to generate (avoid triggering when focused on buttons)
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
-        generate();
+      if (action === "print") {
+        printCard(cardEl);
+        return;
+      }
+
+      if (action === "delete") {
+        const ok = confirm("Delete this card?");
+        if (!ok) return;
+        cards = cards.filter(c => c.id !== id);
+        saveCards();
+        render();
+        toast("Deleted 🗑️");
+        return;
+      }
+
+      if (action === "edit") {
+        fillFormFromCard(card);
+        return;
+      }
+
+      if (action === "copyText") {
+        const ok = await copyToClipboard(cardTextForCopy(card));
+        toast(ok ? "Copied text ✅" : "Copy failed ❌");
+        return;
+      }
+
+      if (action === "copyLink") {
+        const link = buildShareLink({
+          name: card.name || "",
+          age: card.age || "",
+          hobby: card.hobby || "",
+          adjective: card.adjective || "",
+          plural: card.plural || ""
+        });
+        const ok = await copyToClipboard(link);
+        toast(ok ? "Copied share link ✅" : "Copy failed ❌");
+        return;
       }
     });
 
-    updateCount();
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
+        const payload = validateInputs();
+        if (!payload) return;
+        generateCard(payload);
+      }
+    });
+
+    // ===== Boot =====
+    function boot(){
+      cards = loadCards();
+
+      const shared = readPayloadFromURL();
+      if (shared && (shared.name || shared.hobby || shared.adjective || shared.plural || shared.age)) {
+        if (shared.name) {
+          generateCard(shared);
+          toast("Card created from shared link 🎉");
+        } else {
+          toast("Shared link missing name.");
+        }
+        clearURLParams();
+      } else {
+        render();
+      }
+    }
+
+    boot();
   </script>
 </body>
 </html>
