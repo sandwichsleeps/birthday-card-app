@@ -3,227 +3,243 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Birthday Card Giggle Generator 🎉</title>
+  <title>Birthday Card Giggle Machine 🎉</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#ff4d8d">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
   <style>
     :root{
-      --bg1:#ffecf7;
-      --bg2:#e8f7ff;
-      --ink:#1f2937;
-      --muted:#6b7280;
-      --card:#ffffff;
-      --shadow: 0 12px 30px rgba(0,0,0,.12);
       --accent:#ff4d8d;
-      --border: rgba(0,0,0,.08);
-      --radius: 18px;
+      --bg:#fff0f6;
+      --ink:#1f2937;
+      --border:rgba(0,0,0,.08);
+      --radius:16px;
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg,#ffecf7,#e8f7ff);
       color:var(--ink);
-      min-height:100vh;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
     }
-
     header{
-      padding: 26px 18px 10px;
+      padding:24px 16px;
       text-align:center;
     }
-    h1{
-      margin: 14px 0 6px;
-      font-size: clamp(28px, 4vw, 42px);
-    }
-    .subtitle{
-      margin:0;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    h1{ margin:0 0 6px; }
+    .subtitle{ color:#6b7280; font-size:14px; }
 
     .wrap{
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 18px;
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px;
       display:grid;
-      grid-template-columns: 1fr 1.05fr;
-      gap: 18px;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
     }
-
     .panel{
-      background: rgba(255,255,255,.9);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
+      background:white;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
     }
-
     label{
       display:block;
-      margin: 12px 0 6px;
-      font-size: 12px;
-      font-weight: 700;
+      font-size:12px;
+      font-weight:700;
+      margin-top:10px;
     }
     input{
       width:100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      font-size: 14px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-size:14px;
     }
-
     .row{
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
     }
-
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
     button{
-      margin-top: 14px;
-      padding: 12px 16px;
-      border-radius: 14px;
-      border:0;
+      border-radius:14px;
+      padding:10px 14px;
+      border:1px solid var(--border);
       font-weight:800;
       cursor:pointer;
-      background: linear-gradient(135deg, var(--accent), #ff7ab0);
-      color:#fff;
+      background:white;
+    }
+    .primary{
+      background:linear-gradient(135deg,var(--accent),#ff7ab0);
+      color:white;
+      border:none;
     }
 
-    .stack{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .bday-card{
+    .stack{ display:flex; flex-direction:column; gap:12px; }
+    .card{
       border:1px solid var(--border);
-      border-radius:18px;
+      border-radius:16px;
       overflow:hidden;
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns:1fr 1fr;
     }
-
-    .card-left{
-      padding:18px;
-      background:#fff7fb;
-    }
-    .card-right{
-      padding:18px;
-    }
-
-    .message{
-      white-space:pre-wrap;
-      font-size:14px;
-      line-height:1.45;
-    }
-
-    .signature{
-      display:block;
-      margin-top:6px;
-      font-weight:800;
-      white-space:nowrap;
-    }
+    .left{ padding:14px; background:#fff6fa; }
+    .right{ padding:14px; }
+    .message{ white-space:pre-wrap; font-size:14px; line-height:1.45; }
+    .signature{ font-weight:800; margin-top:6px; white-space:nowrap; }
 
     @media(max-width:900px){
       .wrap{ grid-template-columns:1fr; }
-      .bday-card{ grid-template-columns:1fr; }
+      .card{ grid-template-columns:1fr; }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <h1>Birthday Card Giggle Machine 🎉</h1>
-    <p class="subtitle">Write a funny birthday message in seconds</p>
-  </header>
+<header>
+  <h1>Birthday Card Giggle Machine 🎉</h1>
+  <p class="subtitle">Write a funny birthday message in seconds</p>
+</header>
 
-  <main class="wrap">
-    <!-- Input -->
-    <section class="panel">
-      <label>To (recipient name)</label>
-      <input id="name" placeholder="e.g. Ivy">
+<main class="wrap">
+  <!-- Input -->
+  <section class="panel">
+    <label>To (recipient)</label>
+    <input id="name" placeholder="e.g. Ivy">
 
-      <div class="row">
-        <div>
-          <label>Age</label>
-          <input id="age" placeholder="e.g. 9">
-        </div>
-        <div>
-          <label>Hobby</label>
-          <input id="hobby" placeholder="e.g. playing guitar">
-        </div>
+    <div class="row">
+      <div>
+        <label>Age</label>
+        <input id="age" placeholder="e.g. 9">
       </div>
-
-      <div class="row">
-        <div>
-          <label>Adjective</label>
-          <input id="adjective" placeholder="e.g. sparkly">
-        </div>
-        <div>
-          <label>Plural noun</label>
-          <input id="plural" placeholder="e.g. confetti">
-        </div>
+      <div>
+        <label>Hobby</label>
+        <input id="hobby" placeholder="e.g. drawing">
       </div>
+    </div>
 
-      <label>From (your name)</label>
-      <input id="sender" placeholder="e.g. Mum, Alex, Lily">
+    <div class="row">
+      <div>
+        <label>Adjective</label>
+        <input id="adjective" placeholder="e.g. sparkly">
+      </div>
+      <div>
+        <label>Plural noun</label>
+        <input id="plural" placeholder="e.g. confetti">
+      </div>
+    </div>
 
-      <button id="generate">Generate card 🎉</button>
-    </section>
+    <label>From (your name)</label>
+    <input id="sender" placeholder="e.g. Mum, Alex">
 
-    <!-- Cards -->
-    <section class="panel">
-      <div class="stack" id="stack"></div>
-    </section>
-  </main>
+    <div class="actions">
+      <button class="primary" id="generate">Generate 🎉</button>
+      <button id="installBtn" style="display:none;">Install App 📲</button>
+    </div>
+  </section>
 
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./service-worker.js");
-    }
+  <!-- Cards -->
+  <section class="panel">
+    <div class="stack" id="stack"></div>
+  </section>
+</main>
 
-    const $ = id => document.getElementById(id);
-    const stack = $("stack");
+<script>
+  /* PWA registration */
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js");
+  }
 
-    function generate(){
-      const name = $("name").value || "Friend";
-      const age = $("age").value || "";
-      const hobby = $("hobby").value || "having fun";
-      const adj = $("adjective").value || "amazing";
-      const plural = $("plural").value || "good times";
-      const sender = $("sender").value || "You";
+  const $ = id => document.getElementById(id);
+  const stack = $("stack");
 
-      const msg =
+  /* Generate card */
+  function generate(){
+    const name = $("name").value || "Friend";
+    const age = $("age").value || "";
+    const hobby = $("hobby").value || "having fun";
+    const adj = $("adjective").value || "amazing";
+    const plural = $("plural").value || "good times";
+    const sender = $("sender").value || "You";
+
+    const msg =
 `Hey ${name}!
 
-Happy ${age}th birthday 🎉
+Happy ${age ? age + "th " : ""}birthday 🎉
 You are so ${adj}, and your ${hobby} skills are awesome.
 May your day be filled with ${plural}!
 
-With sparkles and high-fives,
+Cheers,
 `;
 
-      const card = document.createElement("div");
-      card.className = "bday-card";
-      card.innerHTML = `
-        <div class="card-left">
-          <strong>TO:</strong> ${name}
-        </div>
-        <div class="card-right">
-          <div class="message">${msg}</div>
-          <span class="signature">— ${sender}</span>
-        </div>
-      `;
-      stack.prepend(card);
-    }
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="left"><strong>TO:</strong> ${name}</div>
+      <div class="right">
+        <div class="message">${msg}</div>
+        <div class="signature">— ${sender}</div>
+      </div>
+    `;
+    stack.prepend(card);
+  }
+  $("generate").addEventListener("click", generate);
 
-    $("generate").addEventListener("click", generate);
-  </script>
+  /* Install App button logic */
+  let deferredPrompt = null;
+  const installBtn = $("installBtn");
+
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInstalled = () =>
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  function updateInstallButton(){
+    if (isInstalled()) {
+      installBtn.style.display = "none";
+    } else if (deferredPrompt || isIOS()) {
+      installBtn.style.display = "inline-block";
+    }
+  }
+
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    updateInstallButton();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    updateInstallButton();
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (isIOS()) {
+      alert("On iPhone/iPad: tap Share → Add to Home Screen.");
+      return;
+    }
+    if (!deferredPrompt) {
+      alert("Install not available yet. Try refreshing in Chrome.");
+      return;
+    }
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    updateInstallButton();
+  });
+
+  updateInstallButton();
+</script>
 </body>
 </html>
